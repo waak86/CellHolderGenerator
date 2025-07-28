@@ -8,6 +8,8 @@
 #include "cell_layout.h"
 
 void Application::run() {
+    float width = 250;
+    float height = 118;
     float cell_dia = 22.0f;
     float wall_thickness = 1.5f;
     float wall_height = 5.0f;
@@ -17,14 +19,34 @@ void Application::run() {
     int   segs = 64;
     bool  honeycomb = true;
 
-    auto rings = app::CellLayout::rectangle(
-        cell_dia,
-        spacing,
+    auto fit = app::CellLayout::fitRect(
+        width, height,
+        cell_dia, spacing,
         wall_thickness,
-        series,
-        parallel,
-        segs,
+        series, parallel,
         honeycomb
+    );
+
+    if(!fit.fits) {
+        std::printf(
+            "%ds%dp does not fit: need +%.2f width, +%.2f height.\n"
+            "Max: %ds%dp\n",
+            series, parallel,
+            fit.deltaWidth, fit.deltaHeight,
+            fit.maxSeries, fit.maxParallel
+        );
+        return;
+    }
+
+    float W = std::min(width, fit.reqWidth);
+    float H = std::min(height, fit.reqHeight);
+
+    auto rings = app::CellLayout::rectangleFixed(
+        W, H,
+        cell_dia, spacing,
+        wall_thickness,
+        series, parallel,
+        segs, honeycomb
     );
 
     auto I = geometry::triangulate(rings);

@@ -89,7 +89,7 @@
       <Filter>src\geometry</Filter>
     </ClCompile>
     <ClCompile Include="cell_layout.cpp">
-      <Filter>src\geometry</Filter>
+      <Filter>src\app</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
