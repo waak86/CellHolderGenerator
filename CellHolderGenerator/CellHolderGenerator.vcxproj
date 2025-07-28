@@ -73,6 +73,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
+    <ClInclude Include="cell_layout.h" />
     <ClInclude Include="dxf_exporter.h" />
     <ClInclude Include="earcut.h" />
     <ClInclude Include="mesh.h" />
@@ -84,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application.cpp" />
+    <ClCompile Include="cell_layout.cpp" />
     <ClCompile Include="dxf_exporter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />

@@ -59,6 +59,9 @@
     <ClInclude Include="triangulator.h">
       <Filter>include\geometry</Filter>
     </ClInclude>
+    <ClInclude Include="cell_layout.h">
+      <Filter>include\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mesh.cpp">
@@ -83,6 +86,9 @@
       <Filter>src\app</Filter>
     </ClCompile>
     <ClCompile Include="triangulator.cpp">
+      <Filter>src\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="cell_layout.cpp">
       <Filter>src\geometry</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include "stl_exporter.h"
 #include "triangulator.h"
+#include "cell_layout.h"
 
 void Application::run() {
     float cell_dia = 22.0f;
@@ -16,33 +17,15 @@ void Application::run() {
     int   segs = 64;
     bool  honeycomb = true;
 
-    float pitch = cell_dia + spacing;
-    float vSpacing = honeycomb ? pitch * 0.86602540378f : pitch;
-    float W = series * pitch + 2 * wall_thickness + (honeycomb ? 0.5f * pitch : 0.0f);
-    float H = parallel * vSpacing + 2 * wall_thickness;
-    float R = cell_dia * 0.5f;
-
-    std::vector<std::vector<Vec2>> rings;
-    rings.reserve(1 + series * parallel);
-    rings.push_back({ {0.f,0.f},{W,0.f},{W,H},{0.f,H} });
-
-    for(int row = 0; row < parallel; ++row) {
-        for(int col = 0; col < series; ++col) {
-            float x = wall_thickness
-                + (col + 0.5f) * pitch
-                + (honeycomb && (row % 2) ? 0.5f * pitch : 0.0f);
-            float y = wall_thickness + (row + 0.5f) * vSpacing;
-            std::vector<Vec2> hole;
-            hole.reserve(segs);
-            for(int i = 0; i < segs; ++i) {
-                float ang = 2.f * M_PI * i / segs;
-                hole.push_back({ x + R * std::cos(ang),
-                                y + R * std::sin(ang) });
-            }
-            std::reverse(hole.begin(), hole.end());
-            rings.push_back(std::move(hole));
-        }
-    }
+    auto rings = app::CellLayout::rectangle(
+        cell_dia,
+        spacing,
+        wall_thickness,
+        series,
+        parallel,
+        segs,
+        honeycomb
+    );
 
     auto I = geometry::triangulate(rings);
     std::vector<Vec2> V;
@@ -63,8 +46,8 @@ void Application::run() {
     for(size_t i = 0; i + 2 < I.size(); i += 3) {
         m.faces.push_back({ (int)I[i + 2], (int)I[i + 1], (int)I[i + 0] });
         m.faces.push_back({ (int)(I[i + 0] + N),
-                           (int)(I[i + 1] + N),
-                           (int)(I[i + 2] + N) });
+                            (int)(I[i + 1] + N),
+                            (int)(I[i + 2] + N) });
     }
 
     int o0 = 0, o1 = 1, o2 = 2, o3 = 3;
@@ -78,10 +61,10 @@ void Application::run() {
     for(int h = 0; h < series * parallel; ++h) {
         size_t s = base + h * segs;
         for(int i = 0; i < segs; ++i) {
-            int i0 = s + i;
-            int i1 = s + (i + 1) % segs;
-            m.faces.push_back({ i0,   i1,   i1 + (int)N });
-            m.faces.push_back({ i0,   i1 + (int)N,   i0 + (int)N });
+            int i0 = (int)(s + i);
+            int i1 = (int)(s + (i + 1) % segs);
+            m.faces.push_back({ i0, i1, i1 + (int)N });
+            m.faces.push_back({ i0, i1 + (int)N, i0 + (int)N });
         }
     }
 
