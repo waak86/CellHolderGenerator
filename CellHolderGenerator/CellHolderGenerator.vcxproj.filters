@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="include\geometry">
+      <UniqueIdentifier>{9c9bf1e8-3378-4d19-8dbd-f7cd9d32bb5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\exporter">
+      <UniqueIdentifier>{4328c7f9-fa9b-418d-9127-02ce5493b304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\app">
+      <UniqueIdentifier>{7cfd86dd-b004-4332-8cb6-29921c173457}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\geometry">
+      <UniqueIdentifier>{c7aeb5bb-dcfb-45fb-a3be-41c9222969b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\exporter">
+      <UniqueIdentifier>{b91353e5-f88c-4024-be88-56c47c832e15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\app">
+      <UniqueIdentifier>{b144a9ed-170c-46d0-a869-0c9746fcf0a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\vendor">
+      <UniqueIdentifier>{ffc2dcf0-70ee-48bf-914c-06cca3b7f316}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mesh.h">
+      <Filter>include\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="vec2.h">
+      <Filter>include\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="vec3.h">
+      <Filter>include\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="dxf_exporter.h">
+      <Filter>include\exporter</Filter>
+    </ClInclude>
+    <ClInclude Include="stl_exporter.h">
+      <Filter>include\exporter</Filter>
+    </ClInclude>
+    <ClInclude Include="application.h">
+      <Filter>include\app</Filter>
+    </ClInclude>
+    <ClInclude Include="parameters.h">
+      <Filter>include\app</Filter>
+    </ClInclude>
+    <ClInclude Include="earcut.h">
+      <Filter>include\vendor</Filter>
+    </ClInclude>
+    <ClInclude Include="triangulator.h">
+      <Filter>include\geometry</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="mesh.cpp">
+      <Filter>src\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="vec2.cpp">
+      <Filter>src\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="vec3.cpp">
+      <Filter>src\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="dxf_exporter.cpp">
+      <Filter>src\exporter</Filter>
+    </ClCompile>
+    <ClCompile Include="stl_exporter.cpp">
+      <Filter>src\exporter</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="application.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="triangulator.cpp">
+      <Filter>src\geometry</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
