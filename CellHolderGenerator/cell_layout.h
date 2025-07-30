@@ -5,13 +5,14 @@
 namespace app {
     struct CellLayout {
         struct FitResult {
-            bool fits;
-            int maxSeries;
-            int maxParallel;
-            float reqWidth;
-            float reqHeight;
-            float deltaWidth;
-            float deltaHeight;
+            bool   fits;
+            int    maxSeries;
+            int    maxParallel;
+            float  reqWidth;
+            float  reqHeight;
+            float  deltaWidth;
+            float  deltaHeight;
+            float  angle;
         };
         static FitResult fitRect(
             float width,
@@ -32,6 +33,7 @@ namespace app {
             int series,
             int parallel,
             int segs,
+            float angle,
             bool honeycomb
         );
     };

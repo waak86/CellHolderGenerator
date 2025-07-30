@@ -2,7 +2,10 @@
 #include <cmath>
 #include <algorithm>
 
-app::CellLayout::FitResult app::CellLayout::fitRect(
+using app::CellLayout;
+using FitResult = CellLayout::FitResult;
+
+FitResult CellLayout::fitRect(
     float width,
     float height,
     float cell_dia,
@@ -12,27 +15,56 @@ app::CellLayout::FitResult app::CellLayout::fitRect(
     int parallel,
     bool honeycomb
 ) {
-    float pitch = cell_dia + spacing;
-    float vSpacing = honeycomb ? pitch * 0.86602540378f : pitch;
-    float reqW = series * pitch + 2 * wall_thickness + (honeycomb ? 0.5f * pitch : 0.0f);
-    float reqH = parallel * vSpacing + 2 * wall_thickness;
-    bool fits = (reqW <= width && reqH <= height);
-    int maxS = series;
-    int maxP = parallel;
-    if(!fits) {
-        if(reqW > width) {
-            maxS = std::max(0, int((width - 2 * wall_thickness - (honeycomb ? 0.5f * pitch : 0.0f)) / pitch));
-        }
-        if(reqH > height) {
-            maxP = std::max(0, int((height - 2 * wall_thickness) / vSpacing));
-        }
+    float D = cell_dia;
+    float S = spacing;
+    float t = wall_thickness;
+    float pitch = D + S;
+
+    if(!honeycomb) {
+        float reqW = series * pitch + 2 * t;
+        float reqH = parallel * pitch + 2 * t;
+        bool fits = (reqW <= width && reqH <= height);
+        int maxS = fits ? series : std::max(0, int((width - 2 * t) / pitch));
+        int maxP = fits ? parallel : std::max(0, int((height - 2 * t) / pitch));
+        return { fits, maxS, maxP,
+                 reqW, reqH,
+                 std::max(0.f, reqW - width),
+                 std::max(0.f, reqH - height),
+                 0.f };
     }
-    return { fits, maxS, maxP, reqW, reqH,
-             std::max(0.0f, reqW - width),
-             std::max(0.0f, reqH - height) };
+
+    // honeycomb case
+    float cw = (width - 2 * t - series * pitch) / pitch;
+    cw = std::clamp(cw, 0.f, 1.f);
+    float angleW = std::acos(cw);
+
+    float sh = (height - 2 * t) / (parallel * pitch);
+    sh = std::clamp(sh, 0.f, 1.f);
+    float angleH = std::asin(sh);
+
+    if(angleW <= angleH) {
+        float reqW = series * pitch + 2 * t + pitch * std::cos(angleW);
+        float reqH = parallel * pitch * std::sin(angleW) + 2 * t;
+        return { true, series, parallel,
+                 reqW, reqH,
+                 0.f, 0.f,
+                 angleW };
+    }
+
+    // cannot fit honeycomb at any angle
+    // fall back to maximum grid values
+    int maxS = std::max(0, int((width - 2 * t) / pitch));
+    int maxP = std::max(0, int((height - 2 * t) / pitch));
+    float reqW = series * pitch + 2 * t + pitch * std::cos(angleW);
+    float reqH = parallel * pitch * std::sin(angleH) + 2 * t;
+    return { false, maxS, maxP,
+             reqW, reqH,
+             std::max(0.f, reqW - width),
+             std::max(0.f, reqH - height),
+             0.f };
 }
 
-std::vector<std::vector<Vec2>> app::CellLayout::rectangleFixed(
+std::vector<std::vector<Vec2>> CellLayout::rectangleFixed(
     float width,
     float height,
     float cell_dia,
@@ -41,33 +73,40 @@ std::vector<std::vector<Vec2>> app::CellLayout::rectangleFixed(
     int series,
     int parallel,
     int segs,
+    float angle,
     bool honeycomb
 ) {
-    float pitch = cell_dia + spacing;
-    float vSpacing = honeycomb ? pitch * 0.86602540378f : pitch;
-    float R = cell_dia * 0.5f;
+    float D = cell_dia;
+    float S = spacing;
+    float t = wall_thickness;
+    float pitch = D + S;
+    float R = D * 0.5f;
+
+    float offset = honeycomb ? pitch * std::cos(angle) : 0.f;
+    float vStep = honeycomb ? pitch * std::sin(angle) : pitch;
+
+    float W = series * pitch + 2 * t + offset;
+    float H = honeycomb
+        ? parallel * vStep + 2 * t
+        : parallel * pitch + 2 * t;
 
     std::vector<std::vector<Vec2>> rings;
     rings.reserve(1 + series * parallel);
-    rings.push_back({ {0.f, 0.f}, {width, 0.f}, {width, height}, {0.f, height} });
+    rings.push_back({ {t, t}, {W - t, t}, {W - t, H - t}, {t, H - t} });
 
     for(int row = 0; row < parallel; ++row) {
         for(int col = 0; col < series; ++col) {
-            float x = wall_thickness
-                + (col + 0.5f) * pitch
-                + (honeycomb && (row % 2) ? 0.5f * pitch : 0.0f);
-            float y = wall_thickness + (row + 0.5f) * vSpacing;
+            float cx = t + R + col * pitch + (honeycomb && (row % 2) ? offset : 0);
+            float cy = t + R + row * vStep;
             std::vector<Vec2> hole;
             hole.reserve(segs);
             for(int i = 0; i < segs; ++i) {
-                float ang = 2.f * M_PI * i / segs;
-                hole.push_back({ x + R * std::cos(ang),
-                                 y + R * std::sin(ang) });
+                float a = 2.f * M_PI * i / segs;
+                hole.push_back({ cx + R * std::cos(a), cy + R * std::sin(a) });
             }
             std::reverse(hole.begin(), hole.end());
             rings.push_back(std::move(hole));
         }
     }
-
     return rings;
 }
