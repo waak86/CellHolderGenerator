@@ -80,24 +80,53 @@ std::vector<std::vector<Vec2>> CellLayout::rectangleFixed(
     float S = spacing;
     float t = wall_thickness;
     float pitch = D + S;
-    float R = D * 0.5f;
+    float R = 0.5f * D;
+    float eps = 0.02f;
 
     float offset = honeycomb ? pitch * std::cos(angle) : 0.f;
     float vStep = honeycomb ? pitch * std::sin(angle) : pitch;
 
-    float W = series * pitch + 2 * t + offset;
-    float H = honeycomb
-        ? parallel * vStep + 2 * t
-        : parallel * pitch + 2 * t;
+    float W = width;
+    float H = height;
+
+    float minXc = t + R + eps;
+    float maxXc = W - t - R - eps;
+    float minYc = t + R + eps;
+    float maxYc = H - t - R - eps;
+
+    if(honeycomb) {
+        float even_last_center = t + R + (series - 1) * pitch;
+        float max_offset_right = maxXc - even_last_center;
+        if(max_offset_right < 0.f) max_offset_right = 0.f;
+        if(offset > max_offset_right) offset = max_offset_right;
+
+        vStep = std::sqrt(std::max(0.f, pitch * pitch - offset * offset));
+
+        if(parallel > 1) {
+            float vStep_max = (maxYc - minYc) / float(parallel - 1);
+            if(vStep > vStep_max) {
+                vStep = vStep_max;
+                offset = std::sqrt(std::max(0.f, pitch * pitch - vStep * vStep));
+                if(offset > max_offset_right) offset = max_offset_right;
+                vStep = std::sqrt(std::max(0.f, pitch * pitch - offset * offset));
+            }
+        }
+    }
 
     std::vector<std::vector<Vec2>> rings;
     rings.reserve(1 + series * parallel);
     rings.push_back({ {t, t}, {W - t, t}, {W - t, H - t}, {t, H - t} });
 
     for(int row = 0; row < parallel; ++row) {
+        float rowOffset = (honeycomb && (row % 2)) ? offset : 0.f;
         for(int col = 0; col < series; ++col) {
-            float cx = t + R + col * pitch + (honeycomb && (row % 2) ? offset : 0);
+            float cx = t + R + col * pitch + rowOffset;
             float cy = t + R + row * vStep;
+            if(cx < minXc) cx = minXc;
+            if(cx > maxXc) cx = maxXc;
+            if(cy < minYc) cy = minYc;
+            if(cy > maxYc) cy = maxYc;
+
             std::vector<Vec2> hole;
             hole.reserve(segs);
             for(int i = 0; i < segs; ++i) {
