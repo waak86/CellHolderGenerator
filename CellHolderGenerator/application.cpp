@@ -7,32 +7,29 @@
 #include "cell_layout.h"
 
 void Application::run() {
-    float userWidth = 445.0f;
+    float userWidth = 460.0f;
     float userHeight = 140.0f;
     float cell_dia = 21.4f;
-    float spacing = 0.4f;
-    float wall_thickness = 0.4f;
-    float wall_height = 5.0f;
-    int   series = 20;
-    int   parallel = 6;
-    int   segs = 64;
+    float spacing = 0.5f;
+    float wall_thickness = 0.5f;
+    float wall_height = 10.0f;
+    int   series = 10;
+    int   parallel = 4;
     bool  honeycomb = true;
+    float chord_tol_mm = 0.005f; // 0.01 smooth holes; 0.005 ultra smooth holes
+    bool  rounded_corners = true;
+    float corner_radius = 5.0f;
 
     auto fit = app::CellLayout::fitRect(
         userWidth, userHeight,
-        cell_dia, spacing,
-        wall_thickness,
-        series, parallel,
-        honeycomb
+        cell_dia, spacing, wall_thickness,
+        series, parallel, honeycomb
     );
 
     if(!fit.fits) {
-        std::printf(
-            "%ds%dp won't fit: need +%.2fmm width, +%.2fmm height.\nMax: %ds%dp\n",
-            series, parallel,
-            fit.deltaWidth, fit.deltaHeight,
-            fit.maxSeries, fit.maxParallel
-        );
+        std::printf("%ds%dp won't fit: need +%.2fmm width, +%.2fmm height. Max: %ds%dp\n",
+            series, parallel, fit.deltaWidth, fit.deltaHeight,
+            fit.maxSeries, fit.maxParallel);
         return;
     }
 
@@ -40,47 +37,45 @@ void Application::run() {
     float H = std::min(userHeight, fit.reqHeight);
 
     auto rings = app::CellLayout::rectangleFixed(
-        W, H,
-        cell_dia, spacing,
-        wall_thickness,
-        series, parallel,
-        segs, fit.angle, honeycomb
+        W, H, cell_dia, spacing, wall_thickness,
+        series, parallel, chord_tol_mm, honeycomb,
+        rounded_corners, corner_radius
     );
 
-    auto I = geometry::triangulate(rings);
+    std::vector<size_t> ring_start, ring_size;
     std::vector<Vec2> V;
-    for(auto& r : rings)
-        for(auto& v : r)
-            V.push_back(v);
+    ring_start.reserve(rings.size());
+    ring_size.reserve(rings.size());
+    for(const auto& r : rings) {
+        ring_start.push_back(V.size());
+        ring_size.push_back(r.size());
+        V.insert(V.end(), r.begin(), r.end());
+    }
+
+    auto I = geometry::triangulate(rings);
 
     Mesh m;
-    for(auto& v : V) m.vertices.push_back({ v.x,v.y,0.f });
+    m.vertices.reserve(V.size() * 2);
+    for(auto& v : V) m.vertices.push_back({ v.x, v.y, 0.f });
     size_t N = m.vertices.size();
     for(size_t i = 0; i < N; ++i) {
         auto& v = m.vertices[i];
-        m.vertices.push_back({ v.x,v.y,wall_height });
+        m.vertices.push_back({ v.x, v.y, wall_height });
     }
 
     for(size_t i = 0; i + 2 < I.size(); i += 3) {
-        m.faces.push_back({ (int)I[i + 2],(int)I[i + 1],(int)I[i] });
-        m.faces.push_back({ (int)(I[i] + N),(int)(I[i + 1] + N),(int)(I[i + 2] + N) });
+        m.faces.push_back({ int(I[i + 2]), int(I[i + 1]), int(I[i]) });
+        m.faces.push_back({ int(I[i] + N), int(I[i + 1] + N), int(I[i + 2] + N) });
     }
 
-    int o0 = 0, o1 = 1, o2 = 2, o3 = 3;
-    int t0 = o0 + N, t1 = o1 + N, t2 = o2 + N, t3 = o3 + N;
-    m.faces.push_back({ o0,o1,t1 }); m.faces.push_back({ o0,t1,t0 });
-    m.faces.push_back({ o1,o2,t2 }); m.faces.push_back({ o1,t2,t1 });
-    m.faces.push_back({ o2,o3,t3 }); m.faces.push_back({ o2,t3,t2 });
-    m.faces.push_back({ o3,o0,t0 }); m.faces.push_back({ o3,t0,t3 });
-
-    size_t base = rings[0].size();
-    for(int h = 0; h < series * parallel; ++h) {
-        size_t s = base + h * segs;
-        for(int i = 0; i < segs; ++i) {
-            int i0 = s + i;
-            int i1 = s + (i + 1) % segs;
-            m.faces.push_back({ i0,i1,i1 + (int)N });
-            m.faces.push_back({ i0,i1 + (int)N,i0 + (int)N });
+    for(size_t h = 0; h < rings.size(); ++h) {
+        size_t s = ring_start[h];
+        size_t n = ring_size[h];
+        for(size_t i = 0; i < n; ++i) {
+            int i0 = int(s + i);
+            int i1 = int(s + (i + 1) % n);
+            m.faces.push_back({ i0, i1, i1 + int(N) });
+            m.faces.push_back({ i0, i1 + int(N), i0 + int(N) });
         }
     }
 

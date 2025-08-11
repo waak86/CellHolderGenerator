@@ -5,15 +5,15 @@
 namespace app {
     struct CellLayout {
         struct FitResult {
-            bool   fits;
-            int    maxSeries;
-            int    maxParallel;
-            float  reqWidth;
-            float  reqHeight;
-            float  deltaWidth;
-            float  deltaHeight;
-            float  angle;
+            bool  fits;
+            int   maxSeries;
+            int   maxParallel;
+            float reqWidth;
+            float reqHeight;
+            float deltaWidth;
+            float deltaHeight;
         };
+
         static FitResult fitRect(
             float width,
             float height,
@@ -24,6 +24,7 @@ namespace app {
             int parallel,
             bool honeycomb
         );
+
         static std::vector<std::vector<Vec2>> rectangleFixed(
             float width,
             float height,
@@ -32,9 +33,10 @@ namespace app {
             float wall_thickness,
             int series,
             int parallel,
-            int segs,
-            float angle,
-            bool honeycomb
+            float chord_tol_mm,
+            bool honeycomb,
+            bool rounded_corners = false,
+            float corner_radius = 5.0f
         );
     };
 }
