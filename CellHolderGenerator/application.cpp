@@ -1,31 +1,34 @@
-#include <cstdio>
+﻿#include <cstdio>
 #include <algorithm>
 #include "application.h"
 #include "mesh.h"
 #include "stl_exporter.h"
 #include "triangulator.h"
 #include "cell_layout.h"
+#include "dxf_exporter.h"
 
 void Application::run() {
+    // ----------------------------------------------------------
+    // ---------------------- STL Exporter ----------------------
+    // ----------------------------------------------------------
+
     float userWidth = 460.0f;
     float userHeight = 140.0f;
     float cell_dia = 21.4f;
     float spacing = 0.5f;
     float wall_thickness = 0.5f;
     float wall_height = 10.0f;
-    int   series = 10;
-    int   parallel = 4;
+    int   series = 20;
+    int   parallel = 6;
     bool  honeycomb = true;
-    float chord_tol_mm = 0.005f; // 0.01 smooth holes; 0.005 ultra smooth holes
+    float chord_tol_mm = 0.005f;
     bool  rounded_corners = true;
     float corner_radius = 5.0f;
 
     auto fit = app::CellLayout::fitRect(
-        userWidth, userHeight,
-        cell_dia, spacing, wall_thickness,
-        series, parallel, honeycomb
+        userWidth, userHeight, cell_dia, spacing,
+        wall_thickness, series, parallel, honeycomb
     );
-
     if(!fit.fits) {
         std::printf("%ds%dp won't fit: need +%.2fmm width, +%.2fmm height. Max: %ds%dp\n",
             series, parallel, fit.deltaWidth, fit.deltaHeight,
@@ -80,4 +83,38 @@ void Application::run() {
     }
 
     STLExporter::export_ascii(m, "cellholder.stl");
+
+    // --------------------------------------------------------
+	// ---------------------- DXF Export ----------------------
+	// --------------------------------------------------------
+
+    float plate_side_clearance = 6.0f; // side clearance
+    float end_margin = 6.0f; // top clearance
+    float weld_diameter = 6.0f;
+    float gap_mm = 10.f;
+
+    auto drawing = dxf::busbars_series_groups(
+        rings, series, parallel, honeycomb,
+        plate_side_clearance, end_margin, weld_diameter, gap_mm
+    );
+
+    bool dxf_show_cells = true;
+    float dxf_cell_diameter = cell_dia;
+
+    auto centroid2d = [](const std::vector<Vec2>& p) {
+        double cx = 0.0, cy = 0.0; size_t n = p.size();
+        for(const auto& v : p) { cx += v.x; cy += v.y; }
+        return Vec2{ float(cx / double(n)), float(cy / double(n)) };
+        };
+
+    if(dxf_show_cells) {
+        float r = 0.5f * dxf_cell_diameter;
+        for(size_t i = 1; i < rings.size(); ++i) {
+            Vec2 c = centroid2d(rings[i]);
+            drawing.circles.push_back({ c.x, c.y, r, "CELLS" });
+        }
+    }
+
+    dxf::save(drawing, "busbars.dxf");
+
 }
